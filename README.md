@@ -1,2 +1,2 @@
 # oir2stdData
-matlab script for converting olympus .oir image files into matlab readable images and metadata 
+MATLAB script for converting Olympus .oir image files into MATLAB readable images and metadata
