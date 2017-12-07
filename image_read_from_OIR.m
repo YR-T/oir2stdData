@@ -1,5 +1,5 @@
 function [image,meta,ref,index] = image_read_from_OIR(fid,sizeX,sizeY,n_tz,ref_sizeX,ref_sizeY,line_rate, flag,n_ch,accu_flag)
-% flag==0 -> '.oir'Aflag==1 -> followed files
+% flag==0 -> '.oir', flag==1 -> followed files
 % accu_flag,
 
 % Copyright:
@@ -45,7 +45,7 @@ if accu_flag~=0
     for i=1:num_divide
         if i<11
             a=i;
-            fstart_p{i}=find(all([loc_0,loc_0_s1,loc_0_s2,loc_4_s3,loc_0_s4,[false(8,1);buf_all(1:end-8)==47+a],loc_95_s9],2));%‚±‚¿‚ç‚ªŠmŽÀ,161102
+            fstart_p{i}=find(all([loc_0,loc_0_s1,loc_0_s2,loc_4_s3,loc_0_s4,[false(8,1);buf_all(1:end-8)==47+a],loc_95_s9],2));%ï¿½ï¿½ï¿½ï¿½ï¿½ç‚ªï¿½mï¿½ï¿½,161102
         else
             a=mod(i,10);
             fstart_p{i}=find(all([loc_0,loc_4_s3,[false(8,1);buf_all(1:end-8)==47+a],loc_49_s9,loc_95_s10],2));
