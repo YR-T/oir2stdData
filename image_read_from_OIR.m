@@ -20,9 +20,7 @@ frewind(fid)
 image = zeros(sizeY,sizeX,n_tz,n_ch,'uint16');
 num_line_once=ceil(30/line_rate);
 num_divide=ceil(sizeY/num_line_once);
-
 buf_all = fread(fid,[inf],'uint8=>uint8');
-
 
 if accu_flag~=0
     loc_0 = buf_all==0|buf_all==32;
@@ -38,37 +36,59 @@ if accu_flag~=0
     end
 end
 fstart_p=cell(num_divide,1);
-determ_mat=false(length(buf_all),4);%frame_rate<300ms;
 
 if accu_flag~=0
-    
     for i=1:num_divide
         if i<11
             a=i;
-            fstart_p{i}=find(all([loc_0,loc_0_s1,loc_0_s2,loc_4_s3,loc_0_s4,[false(8,1);buf_all(1:end-8)==47+a],loc_95_s9],2));%�����炪�m��,161102
+            fstart_p{i}=find(all([loc_0,loc_0_s1,loc_0_s2,loc_4_s3,loc_0_s4,[false(8,1);buf_all(1:end-8)==47+a],loc_95_s9],2));
         else
             a=mod(i,10);
             fstart_p{i}=find(all([loc_0,loc_4_s3,[false(8,1);buf_all(1:end-8)==47+a],loc_49_s9,loc_95_s10],2));
         end
         if flag==0
-            fstart_p{i}(1:n_ch)=[];
+            fseek(fid,fstart_p{i}(1)-100,-1);
+            str=fread(fid,100,'uint8=>char')';
+            if strfind(str,'REF')
+                fstart_p{i}(1:n_ch)=[]; 
+            end
         end
     end
 else
     for i=1:num_divide
         if i<11
             a=i;
+            if i==1
+                determ_mat = [[false(3,1);buf_all(1:end-3)==4],[false(8,1);buf_all(1:end-8)==47+a],[false(9,1);buf_all(1:end-9)==95]];
+            else
+                determ_mat(:,2) = [false(8,1);buf_all(1:end-8)==47+a];
+            end
         else
             a=mod(i,10);
-        end
-        if i==1
-            determ_mat = [[false(3,1);buf_all(1:end-3)==4],[false(8,1);buf_all(1:end-8)==47+a],[false(9,1);buf_all(1:end-9)==95]];
-        else
-            determ_mat(:,2) = [false(8,1);buf_all(1:end-8)==47+a];
+            if i==11
+                determ_mat = [[false(3,1);buf_all(1:end-3)==4],[false(8,1);buf_all(1:end-8)==47+a],...
+                    [false(9,1);buf_all(1:end-9)==49],[false(10,1);buf_all(1:end-10)==95]];
+            elseif i==21
+                determ_mat = [[false(3,1);buf_all(1:end-3)==4],[false(8,1);buf_all(1:end-8)==47+a],...
+                    [false(9,1);buf_all(1:end-9)==50],[false(10,1);buf_all(1:end-10)==95]];                
+            elseif i==31
+                determ_mat = [[false(3,1);buf_all(1:end-3)==4],[false(8,1);buf_all(1:end-8)==47+a],...
+                    [false(9,1);buf_all(1:end-9)==51],[false(10,1);buf_all(1:end-10)==95]];                
+            else
+                if a>0
+                determ_mat(:,2) = [false(8,1);buf_all(1:end-8)==47+a];
+                else
+                determ_mat(:,2) = [false(8,1);buf_all(1:end-8)==57];
+                end
+            end
         end
         fstart_p{i}= find(all(determ_mat,2));
         if flag==0
-            fstart_p{i}(1:n_ch)=[];
+            fseek(fid,fstart_p{i}(1)-100,-1);
+            str=fread(fid,100,'uint8=>char')';
+            if strfind(str,'REF')
+                fstart_p{i}(1:n_ch)=[]; 
+            end
         end
     end
 end
@@ -77,7 +97,8 @@ for i = 1:n_ch:length(fstart_p{num_divide})
     for j=1:num_divide
         for k=1:n_ch
             fseek(fid,fstart_p{j}(i+k-1),-1);
-            image(num_line_once*(j-1)+1:min(num_line_once*j,sizeY),1:sizeX,(i-1)/n_ch+1,k) = fread(fid,[sizeX,min(num_line_once,sizeY-num_line_once*(j-1))],'uint16=>uint16')';
+            image(num_line_once*(j-1)+1:min(num_line_once*j,sizeY),1:sizeX,(i-1)/n_ch+1,k) =...
+                fread(fid,[sizeX,min(num_line_once,sizeY-num_line_once*(j-1))],'uint16=>uint16')';
         end
     end
 end

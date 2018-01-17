@@ -30,8 +30,7 @@ function [output_list,stdData]=oir2stdData(fullpath,mode,accu_flag)
 [~,filename,ext]=fileparts(fullpath);
 
 if isempty(strfind(ext,'.oir'))
-    disp('input *.oir file!');
-    return
+    error('input is restricted to OIR files')
 end
 
 if nargin==1
@@ -66,6 +65,12 @@ sizeY = stdData.Metadata.sizeY;
 loc_channelId = strfind(meta,'pmt channelId');
 n_ch = numel(loc_channelId);
 n_tz = floor(1.08e9/sizeX/sizeY/2); 
+if n_ch>2
+    disp('Too many channels, movie with 1 or 2 channels is readable. Return blank outputs.')
+    output_list=[];
+    stdData.Image{1}=[];
+    return
+end
 
 switch n_ch
     case 1
@@ -79,6 +84,7 @@ switch n_ch
                 fullpath = fullfile(pwd,filelist(i).name);
             end
             [image1,meta,ref,index] = image_read_from_OIR(fid,sizeX,sizeY,n_tz,ref_sizeX,ref_sizeY,line_rate,flag,n_ch,accu_flag);
+
             image1(:,:,index+1:n_tz) = [];
             
             if i~=0
@@ -113,6 +119,7 @@ switch n_ch
                 clear stdData
                 fclose(fid);
             else
+                output_list(i+1,1).name=[];
                 if i==0
                     stdData = OIRxml2stdData(previous_index+1,fullpath,meta,ref,image1);
                     stdData.Metadata.sizeY = sizeY_extract(fid);
@@ -120,12 +127,12 @@ switch n_ch
                 else
                     stdData_tmp = OIRxml2stdData(1,fullpath,meta,ref,image1);
                     stdData.Image{1}=cat(4,stdData.Image{1},stdData_tmp.Image{1});
-                    output_list(i+1,1).name=[];
                 end
             end
         end
         
     case 2
+        output_list(i+1,1).name=[];
         flag=0;
         [image_out,meta,ref,index] = image_read_from_OIR(fid,sizeX,sizeY,n_tz,ref_sizeX,ref_sizeY,line_rate,flag,n_ch,accu_flag);
        
@@ -190,7 +197,7 @@ switch n_ch
             image1 = reshape(image1,sizeY,sizeX,n_z,floor(index/n_z));
             image2(:,:,floor(index/n_z)*n_z+1:index) = [];
             image2 = reshape(image2,sizeY,sizeX,n_z,floor(index/n_z));
-            
+
             if mode ==0
                 stdData = OIRxml2stdData(previous_index+1,fullfile(pwd,filelist(i).name),meta,ref,image1,image2);
                 stdData.Metadata.sizeY = sizeY_extract(fid);
