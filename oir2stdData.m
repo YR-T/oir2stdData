@@ -62,7 +62,7 @@ stdData.Metadata.sizeX = sizeX_extract(fid);
 n_z = stdData.Metadata.sizeZ;
 sizeX = stdData.Metadata.sizeX;
 sizeY = stdData.Metadata.sizeY;
-loc_channelId = strfind(meta,'pmt channelId');
+loc_channelId = strfind(meta,'channel id');
 n_ch = numel(loc_channelId);
 n_tz = floor(1.08e9/sizeX/sizeY/2); 
 if n_ch>2
@@ -132,7 +132,7 @@ switch n_ch
         end
         
     case 2
-        output_list(i+1,1).name=[];
+        output_list(1,1).name=[];
         flag=0;
         [image_out,meta,ref,index] = image_read_from_OIR(fid,sizeX,sizeY,n_tz,ref_sizeX,ref_sizeY,line_rate,flag,n_ch,accu_flag);
        
@@ -163,7 +163,7 @@ switch n_ch
         
         if mode ==0
             save(fullfile(pwd,[filename,'_00.mat']),'stdData','-v6');
-            output_list.name = fullfile(pwd,[filename,'_00.mat']);
+            output_list(1,1).name = fullfile(pwd,[filename,'_00.mat']);
             previous_index = size(image1,4);
             clear image1
             clear image2
@@ -224,6 +224,9 @@ switch n_ch
             end
    
         end
+end
+if mode==0
+    stdData=[];
 end
 end
 
