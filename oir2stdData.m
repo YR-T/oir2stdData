@@ -1,4 +1,4 @@
-function [output_list,stdData]=oir2stdData(fullpath,mode,accu_flag)
+function [output_list,stdData]=oir2stdData(path,mode,accu_flag)
 %
 % input variables
 % fullpath: absolute path of file is needed. 
@@ -27,7 +27,7 @@ function [output_list,stdData]=oir2stdData(fullpath,mode,accu_flag)
 % details. You should have received a copy of the GNU General Public
 % License along with this program;If not, see http://www.gnu.org/licenses/.
 
-[~,filename,ext]=fileparts(fullpath);
+[folder,filename,ext]=fileparts(path);
 
 if isempty(strfind(ext,'.oir'))
     error('input is restricted to OIR files')
@@ -39,6 +39,10 @@ if nargin==1
 end
 
 % search related files
+if isempty(folder)
+    folder = pwd;
+end
+oldFolder=cd(folder);
 
 filelist = dir(pwd);
 search_ph = [filename, '_[0-9]+[0-9]+[0-9]+[0-9]+[0-9]'];
@@ -49,7 +53,7 @@ for i=length(filelist):-1:1
     end
 end
 
-fid = fopen(fullpath);
+fid = fopen(path);
 
 % metadata
 [meta,~] = meta_read_from_OIR(fid);
@@ -64,6 +68,12 @@ sizeX = stdData.Metadata.sizeX;
 sizeY = stdData.Metadata.sizeY;
 loc_channelId = strfind(meta,'channel id');
 n_ch = numel(loc_channelId);
+%%% for old "*.oir" files
+if n_ch == 0
+    loc_channelId = strfind(meta,'pmt channelId');
+    n_ch = numel(loc_channelId);
+end
+%%%
 n_tz = floor(1.08e9/sizeX/sizeY/2); 
 if n_ch>2
     disp('Too many channels, movie with 1 or 2 channels is readable. Return blank outputs.')
@@ -78,6 +88,7 @@ switch n_ch
         for i = 0:1:length(filelist)
             if i==0
                 flag=0;
+                fullpath = path;
             else
                 flag=1;
                 fid = fopen(filelist(i).name);
@@ -157,7 +168,7 @@ switch n_ch
         image2(:,:,floor(index/n_z)*n_z+1:index) = [];
         image2 = reshape(image2,sizeY,sizeX,n_z,floor(index/n_z));
 
-        stdData = OIRxml2stdData(1,fullpath,meta,ref,image1,image2);
+        stdData = OIRxml2stdData(1,path,meta,ref,image1,image2);
         stdData.Metadata.sizeY = sizeY_extract(fid);
         stdData.Metadata.sizeX = sizeX_extract(fid);
         
@@ -228,6 +239,7 @@ end
 if mode==0
     stdData=[];
 end
+cd(oldFolder)
 end
 
 function sizeY = sizeY_extract(fid)
